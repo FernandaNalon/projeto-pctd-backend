@@ -1,0 +1,254 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+model User {
+  id                  String                 @id @default(dbgenerated("(uuid())")) @db.Char(36)
+  nome                String                 @db.VarChar(150)
+  email               String                 @unique(map: "email") @db.VarChar(150)
+  senhaHash           String                 @map("senha_hash") @db.VarChar(255)
+  role                UserRole               @default(DOCENTE)
+  ativo               Boolean                @default(true)
+  refreshToken        String?                @map("refresh_token") @db.Text
+  createdAt           DateTime               @default(now()) @map("created_at") @db.DateTime(0)
+  updatedAt           DateTime               @default(now()) @updatedAt @map("updated_at") @db.DateTime(0)
+  deletedAt           DateTime?              @map("deleted_at") @db.DateTime(0)
+  acordos_convivencia AcordoConvivencia[]
+  auditLogs           AuditLog[]
+  aulas               Aula[]                 @relation("AulaDocente")
+  docente             Docente?
+  observacoes         ObservacaoPedagogica[] @relation("ObsDocente")
+
+  @@map("users")
+}
+
+model Docente {
+  id            String              @id @default(dbgenerated("(uuid())")) @db.Char(36)
+  nome          String              @db.VarChar(150)
+  email         String              @unique(map: "email") @db.VarChar(150)
+  telefone      String?             @db.VarChar(30)
+  cargo         String?             @db.VarChar(100)
+  ativo         Boolean             @default(true)
+  userId        String              @unique(map: "user_id") @map("user_id") @db.Char(36)
+  createdAt     DateTime            @default(now()) @map("created_at") @db.DateTime(0)
+  updatedAt     DateTime            @default(now()) @updatedAt @map("updated_at") @db.DateTime(0)
+  deletedAt     DateTime?           @map("deleted_at") @db.DateTime(0)
+  user          User                @relation(fields: [userId], references: [id], onUpdate: Restrict, map: "fk_docentes_users")
+  turmaDocentes TurmaDocente[]
+  ucs           UnidadeCurricular[]
+
+  @@map("docentes")
+}
+
+model Turma {
+  id             String               @id @default(dbgenerated("(uuid())")) @db.Char(36)
+  nome           String               @db.VarChar(150)
+  periodo        PeriodoTurma
+  curso          String               @db.VarChar(150)
+  dataInicio     DateTime             @map("data_inicio") @db.Date
+  dataFim        DateTime             @map("data_fim") @db.Date
+  status         StatusTurma          @default(ATIVA)
+  createdAt      DateTime             @default(now()) @map("created_at") @db.DateTime(0)
+  updatedAt      DateTime             @default(now()) @updatedAt @map("updated_at") @db.DateTime(0)
+  deletedAt      DateTime?            @map("deleted_at") @db.DateTime(0)
+  acordos        AcordoConvivencia[]
+  alunos         Aluno[]
+  representantes RepresentanteTurma[]
+  turmaDocentes  TurmaDocente[]
+  ucs            UnidadeCurricular[]
+
+  @@map("turmas")
+}
+
+model TurmaDocente {
+  id        String   @id @default(dbgenerated("(uuid())")) @db.Char(36)
+  turmaId   String   @map("turma_id") @db.Char(36)
+  docenteId String   @map("docente_id") @db.Char(36)
+  createdAt DateTime @default(now()) @map("created_at") @db.DateTime(0)
+  docente   Docente  @relation(fields: [docenteId], references: [id], onUpdate: Restrict, map: "fk_turma_docentes_docentes")
+  turma     Turma    @relation(fields: [turmaId], references: [id], onUpdate: Restrict, map: "fk_turma_docentes_turmas")
+
+  @@unique([turmaId, docenteId], map: "uk_turma_docente")
+  @@index([docenteId], map: "fk_turma_docentes_docentes")
+  @@map("turma_docentes")
+}
+
+model AcordoConvivencia {
+  id          String    @id @default(dbgenerated("(uuid())")) @db.Char(36)
+  descricao   String    @db.Text
+  turmaId     String    @map("turma_id") @db.Char(36)
+  criadoPorId String    @map("criado_por_id") @db.Char(36)
+  createdAt   DateTime  @default(now()) @map("created_at") @db.DateTime(0)
+  deletedAt   DateTime? @map("deleted_at") @db.DateTime(0)
+  turma       Turma     @relation(fields: [turmaId], references: [id], onUpdate: Restrict, map: "fk_acordos_turmas")
+  users       User      @relation(fields: [criadoPorId], references: [id], onUpdate: Restrict, map: "fk_acordos_users")
+
+  @@index([turmaId], map: "fk_acordos_turmas")
+  @@index([criadoPorId], map: "fk_acordos_users")
+  @@map("acordos_convivencia")
+}
+
+model RepresentanteTurma {
+  id        String    @id @default(dbgenerated("(uuid())")) @db.Char(36)
+  nome      String    @db.VarChar(150)
+  email     String?   @db.VarChar(150)
+  telefone  String?   @db.VarChar(30)
+  turmaId   String    @map("turma_id") @db.Char(36)
+  createdAt DateTime  @default(now()) @map("created_at") @db.DateTime(0)
+  deletedAt DateTime? @map("deleted_at") @db.DateTime(0)
+  turma     Turma     @relation(fields: [turmaId], references: [id], onUpdate: Restrict, map: "fk_representantes_turmas")
+
+  @@index([turmaId], map: "fk_representantes_turmas")
+  @@map("representantes_turma")
+}
+
+model UnidadeCurricular {
+  id           String    @id @default(dbgenerated("(uuid())")) @db.Char(36)
+  nome         String    @db.VarChar(180)
+  cargaHoraria Int       @map("carga_horaria")
+  quantAulas   Int       @map("quant_aulas")
+  turmaId      String    @map("turma_id") @db.Char(36)
+  docenteId    String    @map("docente_id") @db.Char(36)
+  createdAt    DateTime  @default(now()) @map("created_at") @db.DateTime(0)
+  updatedAt    DateTime  @default(now()) @updatedAt @map("updated_at") @db.DateTime(0)
+  deletedAt    DateTime? @map("deleted_at") @db.DateTime(0)
+  aulas        Aula[]
+  docente      Docente   @relation(fields: [docenteId], references: [id], onUpdate: Restrict, map: "fk_ucs_docentes")
+  turma        Turma     @relation(fields: [turmaId], references: [id], onUpdate: Restrict, map: "fk_ucs_turmas")
+
+  @@index([docenteId], map: "fk_ucs_docentes")
+  @@index([turmaId], map: "idx_ucs_turma")
+  @@map("unidades_curriculares")
+}
+
+model Aula {
+  id                   String            @id @default(dbgenerated("(uuid())")) @db.Char(36)
+  data                 DateTime          @db.Date
+  numeroAula           Int               @map("numero_aula")
+  tema                 String            @db.VarChar(200)
+  conteudoDesenvolvido String            @map("conteudo_desenvolvido") @db.Text
+  atividadesRealizadas String?           @map("atividades_realizadas") @db.Text
+  observacoes          String?           @db.Text
+  ucId                 String            @map("uc_id") @db.Char(36)
+  docenteId            String            @map("docente_id") @db.Char(36)
+  createdAt            DateTime          @default(now()) @map("created_at") @db.DateTime(0)
+  updatedAt            DateTime          @default(now()) @updatedAt @map("updated_at") @db.DateTime(0)
+  deletedAt            DateTime?         @map("deleted_at") @db.DateTime(0)
+  indicadores          AulaIndicador[]
+  uc                   UnidadeCurricular @relation(fields: [ucId], references: [id], onUpdate: Restrict, map: "fk_aulas_ucs")
+  docente              User              @relation("AulaDocente", fields: [docenteId], references: [id], onUpdate: Restrict, map: "fk_aulas_users")
+
+  @@index([docenteId], map: "fk_aulas_users")
+  @@index([ucId], map: "idx_aulas_uc")
+  @@map("aulas")
+}
+
+model Indicador {
+  id        String          @id @default(dbgenerated("(uuid())")) @db.Char(36)
+  descricao String          @db.Text
+  createdAt DateTime        @default(now()) @map("created_at") @db.DateTime(0)
+  deletedAt DateTime?       @map("deleted_at") @db.DateTime(0)
+  aulas     AulaIndicador[]
+
+  @@map("indicadores")
+}
+
+model AulaIndicador {
+  aulaId      String    @map("aula_id") @db.Char(36)
+  indicadorId String    @map("indicador_id") @db.Char(36)
+  aula        Aula      @relation(fields: [aulaId], references: [id], onUpdate: Restrict, map: "fk_aula_indicadores_aulas")
+  indicador   Indicador @relation(fields: [indicadorId], references: [id], onUpdate: Restrict, map: "fk_aula_indicadores_indicadores")
+
+  @@id([aulaId, indicadorId])
+  @@index([indicadorId], map: "fk_aula_indicadores_indicadores")
+  @@map("aula_indicadores")
+}
+
+model Aluno {
+  id           String                 @id @default(dbgenerated("(uuid())")) @db.Char(36)
+  idInterno    String?                @unique(map: "id_interno") @map("id_interno") @db.VarChar(50)
+  nomeCompleto String                 @map("nome_completo") @db.VarChar(180)
+  email        String?                @unique(map: "email") @db.VarChar(150)
+  telefone     String?                @db.VarChar(30)
+  status       StatusAluno            @default(ATIVO)
+  turmaId      String                 @map("turma_id") @db.Char(36)
+  createdAt    DateTime               @default(now()) @map("created_at") @db.DateTime(0)
+  updatedAt    DateTime               @default(now()) @updatedAt @map("updated_at") @db.DateTime(0)
+  deletedAt    DateTime?              @map("deleted_at") @db.DateTime(0)
+  turma        Turma                  @relation(fields: [turmaId], references: [id], onUpdate: Restrict, map: "fk_alunos_turmas")
+  observacoes  ObservacaoPedagogica[]
+
+  @@index([turmaId], map: "idx_alunos_turma")
+  @@map("alunos")
+}
+
+model ObservacaoPedagogica {
+  id        String   @id @default(dbgenerated("(uuid())")) @db.Char(36)
+  descricao String   @db.Text
+  data      DateTime @db.Date
+  alunoId   String   @map("aluno_id") @db.Char(36)
+  docenteId String   @map("docente_id") @db.Char(36)
+  createdAt DateTime @default(now()) @map("created_at") @db.DateTime(0)
+  aluno     Aluno    @relation(fields: [alunoId], references: [id], onUpdate: Restrict, map: "fk_observacoes_alunos")
+  docente   User     @relation("ObsDocente", fields: [docenteId], references: [id], onUpdate: Restrict, map: "fk_observacoes_users")
+
+  @@index([alunoId], map: "fk_observacoes_alunos")
+  @@index([docenteId], map: "fk_observacoes_users")
+  @@map("observacoes_pedagogicas")
+}
+
+model AuditLog {
+  id           String      @id @default(dbgenerated("(uuid())")) @db.Char(36)
+  userId       String      @map("user_id") @db.Char(36)
+  action       AuditAction
+  entidade     String      @db.VarChar(100)
+  entidadeId   String      @map("entidade_id") @db.Char(36)
+  dadosAntigos String?     @map("dados_antigos") @db.LongText
+  dadosNovos   String?     @map("dados_novos") @db.LongText
+  ipAddress    String?     @map("ip_address") @db.VarChar(80)
+  userAgent    String?     @map("user_agent") @db.Text
+  createdAt    DateTime    @default(now()) @map("created_at") @db.DateTime(0)
+  user         User        @relation(fields: [userId], references: [id], onUpdate: Restrict, map: "fk_audit_users")
+
+  @@index([createdAt], map: "idx_audit_created_at")
+  @@index([entidade, entidadeId], map: "idx_audit_entidade")
+  @@index([userId], map: "idx_audit_user")
+  @@map("audit_logs")
+}
+
+enum UserRole {
+  ADMIN
+  COORDENACAO
+  DOCENTE
+}
+
+enum PeriodoTurma {
+  MANHA
+  TARDE
+  NOITE
+}
+
+enum StatusTurma {
+  ATIVA
+  ENCERRADA
+  CANCELADA
+}
+
+enum StatusAluno {
+  ATIVO
+  EVADIDO
+  TRANSFERIDO
+  CONCLUIDO
+}
+
+enum AuditAction {
+  CRIACAO
+  ATUALIZACAO
+  EXCLUSAO
+  LOGIN
+  LOGOUT
+}
