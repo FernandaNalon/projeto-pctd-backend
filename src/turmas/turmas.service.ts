@@ -3,7 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class TurmasService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   async listar() {
     return this.prisma.turma.findMany({
@@ -36,16 +36,23 @@ export class TurmasService {
   }
 
   async atualizar(id: string, dados: any) {
+    const data: any = {
+      nome: dados.nome,
+      curso: dados.curso,
+      periodo: dados.periodo,
+      dataInicio: dados.dataInicio ? new Date(dados.dataInicio) : undefined,
+      status: dados.status,
+    };
+
+    if (dados.dataFim === null) {
+      data.dataFim = null;
+    } else if (dados.dataFim) {
+      data.dataFim = new Date(dados.dataFim);
+    }
+
     return this.prisma.turma.update({
       where: { id },
-      data: {
-        nome: dados.nome,
-        periodo: dados.periodo,
-        curso: dados.curso,
-        dataInicio: dados.dataInicio ? new Date(dados.dataInicio) : undefined,
-        dataFim: dados.dataFim ? new Date(dados.dataFim) : undefined,
-        status: dados.status,
-      },
+      data,
     });
   }
 

@@ -20,9 +20,6 @@ export class UsersService {
   async buscarPorId(id: string) {
     return this.prisma.user.findUnique({
       where: { id },
-      include: {
-        docente: true,
-      },
     });
   }
 

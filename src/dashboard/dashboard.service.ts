@@ -23,7 +23,12 @@ export class DashboardService {
 
             this.prisma.aluno.count(),
 
-            this.prisma.docente.count(),
+            this.prisma.user.count({
+                where: {
+                    role: 'DOCENTE',
+                    deletedAt: null,
+                },
+            }),
 
             this.prisma.user.count(),
 

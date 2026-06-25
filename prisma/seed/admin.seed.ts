@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import { PrismaClient } from '../../node_modules/@prisma/client';
+import { PrismaClient } from '@prisma/client';
 import { PrismaMariaDb } from '@prisma/adapter-mariadb';
 import * as bcrypt from 'bcrypt';
 
