@@ -19,6 +19,11 @@ export class TurmasService {
   async buscarPorId(id: string) {
     return this.prisma.turma.findUnique({
       where: { id },
+      include: {
+        alunos: true,
+        ucs: true,
+        registros: true,
+      },
     });
   }
 
@@ -26,10 +31,10 @@ export class TurmasService {
     return this.prisma.turma.create({
       data: {
         nome: dados.nome,
-        periodo: dados.periodo,
         curso: dados.curso,
+        periodo: dados.periodo,
         dataInicio: new Date(dados.dataInicio),
-        dataFim: new Date(dados.dataFim),
+        dataFim: dados.dataFim ? new Date(dados.dataFim) : null,
         status: dados.status ?? 'ATIVA',
       },
     });
@@ -60,7 +65,16 @@ export class TurmasService {
     return this.prisma.turma.update({
       where: { id },
       data: {
-        deletedAt: new Date(),
+        status: 'ARQUIVADA',
+      },
+    });
+  }
+
+  async desarquivar(id: string) {
+    return this.prisma.turma.update({
+      where: { id },
+      data: {
+        status: 'ATIVA',
       },
     });
   }

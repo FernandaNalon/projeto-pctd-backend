@@ -1,4 +1,19 @@
-import { PartialType } from '@nestjs/mapped-types';
-import { CreateAlunoDto } from './create-aluno.dto';
+import { IsEnum, IsOptional, IsString } from 'class-validator';
 
-export class UpdateAlunoDto extends PartialType(CreateAlunoDto) {}
+export class UpdateAlunoDto {
+  @IsOptional()
+  @IsString()
+  idInterno?: string;
+
+  @IsOptional()
+  @IsString()
+  nomeCompleto?: string;
+
+  @IsOptional()
+  @IsEnum(['ATIVO', 'EVADIDO', 'TRANSFERIDO', 'CONCLUIDO'])
+  status?: 'ATIVO' | 'EVADIDO' | 'TRANSFERIDO' | 'CONCLUIDO';
+
+  @IsOptional()
+  @IsString()
+  observacoesDocente?: string;
+}

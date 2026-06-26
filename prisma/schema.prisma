@@ -20,9 +20,10 @@ model User {
   updatedAt    DateTime  @default(now()) @updatedAt @map("updated_at") @db.DateTime(0)
   deletedAt    DateTime? @map("deleted_at") @db.DateTime(0)
 
-  unidadesCurriculares UnidadeCurricular[]    @relation("UcDocente")
-  aulas                Aula[]                 @relation("AulaDocente")
-  observacoes          ObservacaoPedagogica[] @relation("ObsDocente")
+  unidadesCurriculares UnidadeCurricular[]  @relation("UcDocente")
+  aulas                Aula[]               @relation("AulaDocente")
+  registros            RegistroInterno[]    @relation("RegistroAutor")
+  comentarios          RegistroComentario[]
   auditLogs            AuditLog[]
 
   @@map("user")
@@ -33,8 +34,6 @@ model Turma {
   nome       String       @db.VarChar(150)
   periodo    PeriodoTurma
   curso      String       @db.VarChar(150)
-  anoLetivo  Int?         @map("ano_letivo")
-  semestre   Int?
   dataInicio DateTime     @map("data_inicio") @db.Date
   dataFim    DateTime?    @map("data_fim") @db.Date
   status     StatusTurma  @default(ATIVA)
@@ -42,27 +41,26 @@ model Turma {
   updatedAt  DateTime     @default(now()) @updatedAt @map("updated_at") @db.DateTime(0)
   deletedAt  DateTime?    @map("deleted_at") @db.DateTime(0)
 
-  alunos      Aluno[]
-  ucs         UnidadeCurricular[]
-  observacoes ObservacaoPedagogica[]
+  alunos    Aluno[]
+  ucs       UnidadeCurricular[]
+  registros RegistroInterno[]
 
   @@map("turma")
 }
 
 model Aluno {
-  id           String      @id @default(dbgenerated("(uuid())")) @db.Char(36)
-  idInterno    String?     @unique @map("id_interno") @db.VarChar(50)
-  nomeCompleto String      @map("nome_completo") @db.VarChar(180)
-  email        String?     @unique @db.VarChar(150)
-  telefone     String?     @db.VarChar(30)
-  status       StatusAluno @default(ATIVO)
-  turmaId      String      @map("turma_id") @db.Char(36)
-  createdAt    DateTime    @default(now()) @map("created_at") @db.DateTime(0)
-  updatedAt    DateTime    @default(now()) @updatedAt @map("updated_at") @db.DateTime(0)
-  deletedAt    DateTime?   @map("deleted_at") @db.DateTime(0)
+  id                 String      @id @default(dbgenerated("(uuid())")) @db.Char(36)
+  idInterno          String?     @unique @map("id_interno") @db.VarChar(50)
+  nomeCompleto       String      @map("nome_completo") @db.VarChar(180)
+  status             StatusAluno @default(ATIVO)
+  observacoesDocente String? @map("observacoes_docente") @db.Text
+  turmaId            String      @map("turma_id") @db.Char(36)
+  createdAt          DateTime    @default(now()) @map("created_at") @db.DateTime(0)
+  updatedAt          DateTime    @default(now()) @updatedAt @map("updated_at") @db.DateTime(0)
+  deletedAt          DateTime?   @map("deleted_at") @db.DateTime(0)
 
-  turma       Turma                  @relation(fields: [turmaId], references: [id])
-  observacoes ObservacaoPedagogica[]
+  turma     Turma             @relation(fields: [turmaId], references: [id])
+  registros RegistroInterno[]
 
   @@index([turmaId])
   @@map("aluno")
@@ -137,7 +135,7 @@ model AulaIndicador {
   @@map("aula_indicador")
 }
 
-model ObservacaoPedagogica {
+model RegistroInterno {
   id         String             @id @default(dbgenerated("(uuid())")) @db.Char(36)
   titulo     String             @db.VarChar(180)
   descricao  String             @db.Text
@@ -146,20 +144,38 @@ model ObservacaoPedagogica {
   status     StatusRegistro     @default(ABERTO)
   data       DateTime           @db.Date
 
-  turmaId   String? @map("turma_id") @db.Char(36)
-  alunoId   String? @map("aluno_id") @db.Char(36)
-  docenteId String  @map("docente_id") @db.Char(36)
+  turmaId String? @map("turma_id") @db.Char(36)
+  alunoId String? @map("aluno_id") @db.Char(36)
+  autorId String  @map("autor_id") @db.Char(36)
 
-  createdAt DateTime @default(now()) @map("created_at") @db.DateTime(0)
+  createdAt DateTime  @default(now()) @map("created_at") @db.DateTime(0)
+  updatedAt DateTime  @default(now()) @updatedAt @map("updated_at") @db.DateTime(0)
+  deletedAt DateTime? @map("deleted_at") @db.DateTime(0)
 
-  turma   Turma? @relation(fields: [turmaId], references: [id])
-  aluno   Aluno? @relation(fields: [alunoId], references: [id])
-  docente User   @relation("ObsDocente", fields: [docenteId], references: [id])
+  turma       Turma?               @relation(fields: [turmaId], references: [id])
+  aluno       Aluno?               @relation(fields: [alunoId], references: [id])
+  autor       User                 @relation("RegistroAutor", fields: [autorId], references: [id])
+  comentarios RegistroComentario[]
 
   @@index([turmaId])
   @@index([alunoId])
-  @@index([docenteId])
-  @@map("observacao_pedagogica")
+  @@index([autorId])
+  @@map("registro_interno")
+}
+
+model RegistroComentario {
+  id         String   @id @default(dbgenerated("(uuid())")) @db.Char(36)
+  comentario String   @db.Text
+  registroId String   @map("registro_id") @db.Char(36)
+  usuarioId  String   @map("usuario_id") @db.Char(36)
+  createdAt  DateTime @default(now()) @map("created_at") @db.DateTime(0)
+
+  registro RegistroInterno @relation(fields: [registroId], references: [id])
+  usuario  User            @relation(fields: [usuarioId], references: [id])
+
+  @@index([registroId])
+  @@index([usuarioId])
+  @@map("registro_comentario")
 }
 
 model AuditLog {
@@ -198,6 +214,7 @@ enum StatusTurma {
   ATIVA
   ENCERRADA
   CANCELADA
+  ARQUIVADA
 }
 
 enum StatusAluno {

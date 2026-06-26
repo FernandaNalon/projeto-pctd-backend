@@ -7,6 +7,7 @@ import {
   Post,
   Put,
   UseGuards,
+  Patch
 } from '@nestjs/common';
 
 import { TurmasService } from './turmas.service';
@@ -25,7 +26,7 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 export class TurmasController {
   constructor(
     private readonly turmasService: TurmasService,
-  ) {}
+  ) { }
 
   @Get()
   listar() {
@@ -50,6 +51,11 @@ export class TurmasController {
     @Body() dados: UpdateTurmaDto,
   ) {
     return this.turmasService.atualizar(id, dados);
+  }
+
+  @Patch(':id/desarquivar')
+  desarquivar(@Param('id') id: string) {
+    return this.turmasService.desarquivar(id);
   }
 
   @Delete(':id')

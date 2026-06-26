@@ -3,7 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class AlunosService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   async listar() {
     return this.prisma.aluno.findMany({
@@ -24,7 +24,7 @@ export class AlunosService {
       where: { id },
       include: {
         turma: true,
-        observacoes: true,
+        registros: true,
       },
     });
   }
@@ -32,11 +32,10 @@ export class AlunosService {
   async criar(dados: any) {
     return this.prisma.aluno.create({
       data: {
-        idInterno: dados.idInterno,
+        idInterno: dados.idInterno || null,
         nomeCompleto: dados.nomeCompleto,
-        email: dados.email,
-        telefone: dados.telefone,
-        status: dados.status ?? 'ATIVO',
+        status: dados.status,
+        observacoesDocente: dados.observacoesDocente || null,
         turmaId: dados.turmaId,
       },
     });
@@ -48,10 +47,8 @@ export class AlunosService {
       data: {
         idInterno: dados.idInterno,
         nomeCompleto: dados.nomeCompleto,
-        email: dados.email,
-        telefone: dados.telefone,
         status: dados.status,
-        turmaId: dados.turmaId,
+        observacoesDocente: dados.observacoesDocente,
       },
     });
   }

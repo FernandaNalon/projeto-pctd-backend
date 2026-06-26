@@ -27,6 +27,7 @@ export class CreateTurmaDto {
   @IsDateString()
   dataInicio: string;
 
+  @IsOptional()
   @IsDateString()
   dataFim: string;
 

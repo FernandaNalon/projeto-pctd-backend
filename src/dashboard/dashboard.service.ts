@@ -36,7 +36,7 @@ export class DashboardService {
 
             this.prisma.aula.count(),
 
-            this.prisma.observacaoPedagogica.count(),
+            this.prisma.registroInterno.count(),
         ]);
 
         return {

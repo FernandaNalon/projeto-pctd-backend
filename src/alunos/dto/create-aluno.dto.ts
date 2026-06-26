@@ -1,11 +1,4 @@
-import { IsEmail, IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
-
-enum StatusAluno {
-  ATIVO = 'ATIVO',
-  EVADIDO = 'EVADIDO',
-  TRANSFERIDO = 'TRANSFERIDO',
-  CONCLUIDO = 'CONCLUIDO',
-}
+import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class CreateAlunoDto {
   @IsOptional()
@@ -16,17 +9,12 @@ export class CreateAlunoDto {
   @IsNotEmpty()
   nomeCompleto: string;
 
-  @IsOptional()
-  @IsEmail()
-  email?: string;
+  @IsEnum(['ATIVO', 'EVADIDO', 'TRANSFERIDO', 'CONCLUIDO'])
+  status: 'ATIVO' | 'EVADIDO' | 'TRANSFERIDO' | 'CONCLUIDO';
 
   @IsOptional()
   @IsString()
-  telefone?: string;
-
-  @IsOptional()
-  @IsEnum(StatusAluno)
-  status?: StatusAluno;
+  observacoesDocente?: string;
 
   @IsString()
   @IsNotEmpty()
